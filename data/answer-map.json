@@ -1,0 +1,66 @@
+{
+    "aa24a4d2-b1f2-408b-9d4a-4be80ec7508d": {
+        "<94 cm / <80 cm": 5,
+        "94-99 cm / 80-85 cm": 4,
+        "100-105 cm / 86-90 cm": 3,
+        "106-110 cm / 91-95 cm": 2,
+        "111-120 cm / 96-105 cm": 1,
+        ">120 cm / >105 cm": 0
+    },
+    "9c968d6d-e21b-448a-b8fb-30056f76ffff": {
+        "<0.9 / <0.8": 5,
+        "0.9-0.94 / 0.8-0.84": 4,
+        "0.95-0.99 / 0.85-0.89": 3,
+        "1.0-1.04 / 0.9-0.94": 2,
+        "1.05-1.09 / 0.95-0.99": 1,
+        "≥1.1 / ≥1.0": 0
+    },
+    "27181fef-736e-4bee-ad31-7d8e983d61b3": {
+        "<120 mmHg": 5,
+        "120-129": 4,
+        "130-139": 3,
+        "140-159": 2,
+        "160-179": 1,
+        "≥180": 0
+    },
+    "ceb0b561-1793-43f1-9c76-11cc3964e48a": {
+        "<80 mmHg": 5,
+        "80-84": 4,
+        "85-89": 3,
+        "90-99": 2,
+        "100-109": 1,
+        "≥110": 0
+    },
+    "ccc73a31-d4f8-4856-8ebb-27647ff39a97": {
+        "7-9": 5,
+        "6.5-7 of 9-9.5": 4,
+        "6-6.5 of 9.5-10": 3,
+        "5.5-6 of 10-10.5": 2,
+        "5-5.5 of >10.5": 1,
+        "<5 of >11": 0
+    },
+    "c714f3fd-a4ff-449b-9946-7badbdc59e03": {
+        ">90 (uitstekend geheugen, geen veranderingen)": 5,
+        "80-89 (af en toe kleine vergeetachtigheid, niet storend)": 4,
+        "70-79 (regelmatig iets vergeten, maar functioneel)": 3,
+        "60-69 (merkbare achteruitgang, impact op dagelijkse taken)": 2,
+        "50-59 (moeite met namen en details, mensen merken het op)": 1,
+        "<50 (significante cognitieve achteruitgang, impact op dagelijks leven)": 0
+    },
+    "f9a247fc-e8d3-4bd8-b7e1-ae54f6766993": {
+        ">1.6 g": 5,
+        "1.4-1.6 g": 4,
+        "1.2-1.4 g": 3,
+        "1.0-1.2 g": 2,
+        "0.8-1.0 g": 1,
+        "<0.8 g": 0
+    },
+    "2c99731f-7ee5-4181-82b5-48a4d876df59": {
+        ">90": 5,
+        "80-89": 4,
+        "70-79": 3,
+        "60-69": 2,
+        "50-59": 1,
+        "<50": 0
+    }
+}

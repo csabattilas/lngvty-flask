@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Score API Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 10px 16px;
+            transition: 0.3s;
+            color: #333;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #ccc;
+        }
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+        }
+        .file-item {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .file-item:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Health Score API Tester</h1>
+    
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'webhook')" id="defaultOpen">Webhook</button>
+        <button class="tablinks" onclick="openTab(event, 'files')">Files & Actions</button>
+    </div>
+    
+    <div id="webhook" class="tabcontent">
+        <h2>Send Webhook Data</h2>
+        <p>Send JSON data to the webhook endpoint:</p>
+        <textarea id="webhookData" placeholder="Paste your JSON data here or use sample data"></textarea>
+        <button onclick="loadSampleData()">Load Sample Data</button>
+        <button onclick="sendWebhook()">Send Webhook</button>
+        <button onclick="sendWebhookAndEmail()">Send Webhook & Email</button>
+        <h3>Response:</h3>
+        <pre id="webhookResponse"></pre>
+    </div>
+    
+    <div id="files" class="tabcontent">
+        <h2>Files & Actions</h2>
+        <p>Manage and process JSON files:</p>
+        <button onclick="listFiles()">Refresh Files</button>
+        <p>Recipient Email (optional):</p>
+        <input type="email" id="recipientEmail" placeholder="Enter recipient email address">
+        <div id="filesList"></div>
+        <h3>Response:</h3>
+        <pre id="actionResponse"></pre>
+    </div>
+    
+    <script>
+        // Document ready - open default tab and load files
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById("defaultOpen").click();
+            // Auto-load files when the page loads
+            listFiles();
+        });
+        
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        // Load sample data
+        function loadSampleData() {
+            fetch('/static/sample_data.json')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('webhookData').value = data;
+                })
+                .catch(error => {
+                    console.error('Error loading sample data:', error);
+                    alert('Error loading sample data. Check if sample_data.json exists in the static folder.');
+                });
+        }
+        
+        // Send webhook
+        function sendWebhook() {
+            const data = document.getElementById('webhookData').value;
+            try {
+                const jsonData = JSON.parse(data);
+                fetch('/api/webhook', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(jsonData)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    document.getElementById('webhookResponse').textContent = JSON.stringify(result, null, 2);
+                })
+                .catch(error => {
+                    console.error('Error sending webhook:', error);
+                    document.getElementById('webhookResponse').textContent = 'Error: ' + error.message;
+                });
+            } catch (e) {
+                document.getElementById('webhookResponse').textContent = 'Invalid JSON: ' + e.message;
+            }
+        }
+        
+        // Send webhook and email
+        function sendWebhookAndEmail() {
+            const data = document.getElementById('webhookData').value;
+            try {
+                const jsonData = JSON.parse(data);
+                document.getElementById('webhookResponse').textContent = 'Sending webhook and email...';
+                
+                fetch('/api/webhook-to-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(jsonData)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    document.getElementById('webhookResponse').textContent = JSON.stringify(result, null, 2);
+                })
+                .catch(error => {
+                    console.error('Error sending webhook and email:', error);
+                    document.getElementById('webhookResponse').textContent = 'Error: ' + error.message;
+                });
+            } catch (e) {
+                document.getElementById('webhookResponse').textContent = 'Invalid JSON: ' + e.message;
+            }
+        }
+        
+        // List files
+        function listFiles() {
+            fetch('/api/files')
+                .then(response => response.json())
+                .then(result => {
+                    const filesListElement = document.getElementById('filesList');
+                    
+                    // Clear previous content
+                    filesListElement.innerHTML = '';
+                    
+                    if (result.success && result.files && result.files.length > 0) {
+                        // Create table for files
+                        const table = document.createElement('table');
+                        table.style.width = '100%';
+                        table.style.borderCollapse = 'collapse';
+                        table.innerHTML = `
+                            <tr>
+                                <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">File Name</th>
+                                <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Created At</th>
+                                <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Size (bytes)</th>
+                                <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Actions</th>
+                            </tr>
+                        `;
+                        
+                        // Add each file to the table
+                        result.files.forEach(file => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${file.name}</td>
+                                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${new Date(file.createdAt).toLocaleString()}</td>
+                                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${file.size}</td>
+                                <td style="padding: 8px; border-bottom: 1px solid #ddd;">
+                                    <button onclick="viewFileContent('${file.name}')">View Content</button>
+                                    <button onclick="processFileAction('${file.name}', 'process')">Process</button>
+                                    <button onclick="processFileAction('${file.name}', 'viewPdf')">View PDF</button>
+                                    <button onclick="processFileAction('${file.name}', 'viewChart')">View Chart</button>
+                                    <button onclick="processFileAction('${file.name}', 'email')">Send Email</button>
+                                </td>
+                            `;
+                            table.appendChild(row);
+                        });
+                        
+                        filesListElement.appendChild(table);
+                    } else {
+                        filesListElement.textContent = 'No files found';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error listing files:', error);
+                    document.getElementById('filesList').textContent = 'Error: ' + error.message;
+                });
+        }
+        
+        // Process file action (process, viewPdf, viewChart, email)
+        function processFileAction(filename, action) {
+            const responseElement = document.getElementById('actionResponse');
+            responseElement.textContent = `Performing ${action} on ${filename}...`;
+            
+            if (action === 'process') {
+                // Process the file
+                fetch(`/api/files/${filename}/process`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ outputFormat: 'pdf' })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    responseElement.textContent = JSON.stringify(result, null, 2);
+                    // Refresh the file list to show any new files
+                    listFiles();
+                })
+                .catch(error => {
+                    console.error(`Error processing file:`, error);
+                    responseElement.textContent = 'Error: ' + error.message;
+                });
+            } 
+            else if (action === 'viewPdf') {
+                // First process the file if needed, then view the PDF
+                fetch(`/api/files/${filename}/process`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ outputFormat: 'pdf' })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success && result.pdfUrl) {
+                        // Open PDF in a new tab
+                        window.open(result.pdfUrl, '_blank');
+                        responseElement.textContent = 'PDF opened in a new tab';
+                    } else {
+                        responseElement.textContent = 'Error: ' + (result.error || 'Failed to generate PDF');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error viewing PDF:', error);
+                    responseElement.textContent = 'Error: ' + error.message;
+                });
+            }
+            else if (action === 'viewChart') {
+                // First process the file if needed, then view the chart
+                fetch(`/api/files/${filename}/process`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ outputFormat: 'pdf' })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success && result.chartUrl) {
+                        // Fetch and display the chart
+                        return fetch(result.chartUrl);
+                    } else {
+                        throw new Error(result.error || 'Failed to generate chart');
+                    }
+                })
+                .then(response => {
+                    // Check if response is JSON or image
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('image/')) {
+                        // It's an image, display it
+                        return response.blob().then(blob => {
+                            const imgUrl = URL.createObjectURL(blob);
+                            const img = document.createElement('img');
+                            img.src = imgUrl;
+                            img.style.maxWidth = '100%';
+                            responseElement.innerHTML = '';
+                            responseElement.appendChild(img);
+                        });
+                    } else {
+                        // It's probably JSON, parse it
+                        return response.json().then(result => {
+                            responseElement.textContent = JSON.stringify(result, null, 2);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error viewing chart:', error);
+                    responseElement.textContent = 'Error: ' + error.message;
+                });
+            }
+            else if (action === 'email') {
+                // Get email address (optional, will be extracted from JSON if not provided)
+                const email = document.getElementById('recipientEmail').value;
+                
+                // First process the file if needed, then send email
+                fetch(`/api/files/${filename}/process`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ outputFormat: 'pdf' })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        // Now send the email
+                        // Email will be extracted from the JSON file if not provided as query parameter
+                        const emailUrl = `/api/files/${filename}/email`;
+                        const fullUrl = email ? `${emailUrl}?email=${encodeURIComponent(email)}` : emailUrl;
+                        
+                        responseElement.textContent = 'Sending email...';
+                        
+                        return fetch(fullUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                    } else {
+                        throw new Error(result.error || 'Failed to process file');
+                    }
+                })
+                .then(response => response.json())
+                .then(emailResult => {
+                    if (emailResult.success) {
+                        responseElement.textContent = `Email sent successfully to: ${emailResult.to_email}\n\n${JSON.stringify(emailResult, null, 2)}`;
+                    } else {
+                        responseElement.textContent = `Failed to send email: ${emailResult.error}\n\n${JSON.stringify(emailResult, null, 2)}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending email:', error);
+                    responseElement.textContent = 'Error: ' + error.message;
+                });
+            }
+        }
+        
+        // View file content
+        function viewFileContent(filename) {
+            fetch(`/api/files/${filename}`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success && result.content) {
+                        const filesDiv = document.getElementById('filesList');
+                        const contentPre = document.createElement('pre');
+                        contentPre.textContent = JSON.stringify(result.content, null, 2);
+                        
+                        // Check if content is already displayed
+                        const existingPre = filesDiv.querySelector(`pre[data-filename="${filename}"]`);
+                        if (existingPre) {
+                            existingPre.remove();
+                        } else {
+                            contentPre.setAttribute('data-filename', filename);
+                            filesDiv.appendChild(contentPre);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error viewing file content:', error);
+                    alert('Error viewing file content: ' + error.message);
+                });
+        }
+        
+        // Process file
+        function processFile() {
+            const filename = document.getElementById('fileSelect').value;
+            const outputFormat = document.getElementById('outputFormat').value;
+            
+            if (!filename) {
+                alert('Please select a file to process');
+                return;
+            }
+            
+            fetch(`/api/files/${filename}/process`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ outputFormat })
+            })
+            .then(response => response.json())
+            .then(result => {
+                document.getElementById('processResponse').textContent = JSON.stringify(result, null, 2);
+                
+                // Update report URLs if available
+                if (result.success) {
+                    if (result.pdfUrl) {
+                        document.getElementById('pdfUrl').value = result.pdfUrl;
+                        document.getElementById('emailPdfUrl').value = result.pdfUrl;
+                    }
+                    if (result.chartUrl) {
+                        document.getElementById('chartUrl').value = result.chartUrl;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error processing file:', error);
+                document.getElementById('processResponse').textContent = 'Error: ' + error.message;
+            });
+        }
+        
+        // Process file and send email
+        function processFileAndEmail() {
+            const filename = document.getElementById('fileSelect').value;
+            
+            if (!filename) {
+                alert('Please select a file to process');
+                return;
+            }
+            
+            document.getElementById('processResponse').textContent = 'Processing file and sending email...';
+            
+            // First process the file, then send the email
+            fetch(`/api/files/${filename}/process`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ outputFormat: 'pdf' })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.pdfUrl) {
+                    // Update report URLs
+                    document.getElementById('pdfUrl').value = result.pdfUrl;
+                    document.getElementById('emailPdfUrl').value = result.pdfUrl;
+                    
+                    // Now send the email
+                    return fetch(`/api/files/${filename}/email`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                } else {
+                    throw new Error('Failed to process file: ' + (result.error || 'Unknown error'));
+                }
+            })
+            .then(response => response.json())
+            .then(emailResult => {
+                document.getElementById('processResponse').textContent = 
+                    'File processed and email sent:\n' + JSON.stringify(emailResult, null, 2);
+            })
+            .catch(error => {
+                console.error('Error processing file or sending email:', error);
+                document.getElementById('processResponse').textContent = 'Error: ' + error.message;
+            });
+        }
+        
+        // View PDF
+        function viewPdf() {
+            const pdfUrl = document.getElementById('pdfUrl').value;
+            if (!pdfUrl) {
+                alert('Please enter a PDF URL');
+                return;
+            }
+            
+            // Clear previous content
+            const responseElement = document.getElementById('reportResponse');
+            responseElement.textContent = '';
+            
+            // First check if it's a PDF or JSON response
+            fetch(pdfUrl)
+                .then(response => {
+                    // Check if response is JSON or PDF
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/pdf')) {
+                        // It's a PDF, open it in a new tab
+                        window.open(pdfUrl, '_blank');
+                        responseElement.textContent = 'PDF opened in a new tab';
+                    } else if (contentType && contentType.includes('application/octet-stream')) {
+                        // It's a binary file, probably PDF
+                        window.open(pdfUrl, '_blank');
+                        responseElement.textContent = 'PDF opened in a new tab';
+                    } else {
+                        // It's probably JSON, parse it
+                        return response.json().then(result => {
+                            responseElement.textContent = JSON.stringify(result, null, 2);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error viewing PDF:', error);
+                    responseElement.textContent = 'Error: ' + error.message;
+                });
+        }
+        
+        // View Chart
+        function viewChart() {
+            const chartUrl = document.getElementById('chartUrl').value;
+            if (!chartUrl) {
+                alert('Please enter a Chart URL');
+                return;
+            }
+            
+            // Clear previous content
+            const responseElement = document.getElementById('reportResponse');
+            responseElement.textContent = '';
+            
+            // First try to fetch as image
+            fetch(chartUrl)
+                .then(response => {
+                    // Check if response is JSON or image
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('image/')) {
+                        // It's an image, display it
+                        return response.blob().then(blob => {
+                            const imgUrl = URL.createObjectURL(blob);
+                            const img = document.createElement('img');
+                            img.src = imgUrl;
+                            img.style.maxWidth = '100%';
+                            responseElement.innerHTML = '';
+                            responseElement.appendChild(img);
+                        });
+                    } else {
+                        // It's probably JSON, parse it
+                        return response.json().then(result => {
+                            responseElement.textContent = JSON.stringify(result, null, 2);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error viewing chart:', error);
+                    responseElement.textContent = 'Error: ' + error.message;
+                });
+        }
+        
+        // Send report via email
+        function sendReportEmail() {
+            const pdfUrl = document.getElementById('emailPdfUrl').value;
+            const email = document.getElementById('recipientEmail').value;
+            
+            if (!pdfUrl) {
+                alert('Please enter a PDF URL');
+                return;
+            }
+            
+            if (!email) {
+                alert('Please enter a recipient email address');
+                return;
+            }
+            
+            // Extract filename from PDF URL
+            const urlParts = pdfUrl.split('/');
+            const filename = urlParts[urlParts.length - 1].split('.')[0];
+            
+            // Clear previous content
+            const responseElement = document.getElementById('reportResponse');
+            responseElement.textContent = 'Sending email...';
+            
+            // Call the email API endpoint
+            fetch(`/api/files/${filename}/email?email=${encodeURIComponent(email)}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(result => {
+                responseElement.textContent = JSON.stringify(result, null, 2);
+            })
+            .catch(error => {
+                console.error('Error sending email:', error);
+                responseElement.textContent = 'Error: ' + error.message;
+            });
+        }
+    </script>
+</body>
+</html>
